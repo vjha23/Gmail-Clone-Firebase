@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import '../css/emailList.css'
 import { IconButton, Checkbox } from '@material-ui/core';
 import ArrowDownwardIcon from '@material-ui/icons/ArrowDownward';
@@ -13,7 +13,17 @@ import InboxIcon from '@material-ui/icons/Inbox';
 import PeopleIcon from '@material-ui/icons/People';
 import LocalOfferIcon from '@material-ui/icons/LocalOffer';
 import EmailRow from './EmailRow';
+import { db } from '../firebase'
 function EmailList() {
+    const [emails, setEmails] = useState([])
+
+    useEffect(() => {
+        db.collection('emails').orderBy('timestamp', 'desc')
+            .onSnapshot(snapshot => setEmails(snapshot.docs.map((doc) => ({
+                id: doc.id,
+                data: doc.data(),
+            }))))
+    }, [])
     return (
         <div className='emailList'>
             <div className='emailList__settings'>
@@ -57,20 +67,25 @@ function EmailList() {
                 <Section Icon={LocalOfferIcon} title='Promotions' color='green' />
             </div>
 
-            <div className='emailList__list'>
-                <EmailRow
-                    title='Twitch'
-                    subject='Hey Fellow Streamer'
-                    description='This is a test'
-                    time='10pm'
-                />
 
-                <EmailRow
-                    title='Twitch'
-                    subject='Hey Fellow Streamer'
-                    description='This is a test This is a test This is a test'
-                    time='10pm'
-                />
+            <div className='emailList__list'>
+
+                {emails.map(({ id, data: { to, message, subject, timestamp } }) => (
+                    <EmailRow
+                        key={id}
+                        id={id}
+                        title={to}
+                        subject={subject}
+                        description={message}
+                        time={timestamp ? new Date(timestamp.seconds * 1000).toUTCString() : 'Loading..'}
+                    />
+
+                ))}
+
+
+
+
+
             </div>
         </div>
     )
